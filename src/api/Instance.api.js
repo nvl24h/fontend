@@ -1,6 +1,6 @@
 import axios from "axios";
+import Cookies from "js-cookie"; // Dùng cho refreshToken trong cookie
 
-// Create Instance bases
 const apiClient = axios.create({
     baseURL: "https://api.azz.icu",
     headers: {
@@ -10,14 +10,35 @@ const apiClient = axios.create({
     },
 });
 
-// Config Interceptors add headers a request
+// Hàm lấy accessToken và x-user-id từ localStorage
+const getAuthHeaders = () => {
+    const accessToken = localStorage.getItem("authorization");
+    const userId = localStorage.getItem("x-user-id");
+
+    let headers = {};
+
+    if (accessToken) {
+        headers["authorization"] = `Bearer ${accessToken}`;
+    }
+
+    if (userId) {
+        headers["x-user-id"] = userId;
+    }
+
+    return headers;
+};
+
+// Interceptor request: Thêm accessToken và x-user-id nếu có
 apiClient.interceptors.request.use(
     (config) => {
-        const userId = localStorage("x-user-id") || null;
-        const authorization = localStorage("authorization") || null;
+        // Lấy các headers liên quan đến xác thực
+        const authHeaders = getAuthHeaders();
 
-        config.headers["x-user-id"] = userId;
-        config.headers["authorization"] = authorization;
+        // Gộp các header vào config
+        config.headers = {
+            ...config.headers,
+            ...authHeaders,
+        };
 
         return config;
     },
@@ -26,53 +47,40 @@ apiClient.interceptors.request.use(
     }
 );
 
-// Export các hàm tương ứng cho từng endpoint
-export const postAPI = {
-    getPosts: () => apiClient.get("/posts"),
-    createPost: (data) => apiClient.post("/posts", data),
-    updatePost: (id, data) => apiClient.put(`/posts/${id}`, data),
-    deletePost: (id) => apiClient.delete(`/posts/${id}`),
-};
+// Interceptor response: Xử lý refresh token khi accessToken hết hạn
+apiClient.interceptors.response.use(
+    (response) => response,
+    async (error) => {
+        const originalRequest = error.config;
 
-export const userAPI = {
-    getUsers: () => apiClient.get("/users"),
-    createUser: (data) => apiClient.post("/users", data),
-    updateUser: (id, data) => apiClient.put(`/users/${id}`, data),
-    deleteUser: (id) => apiClient.delete(`/users/${id}`),
-};
+        if (error.response.status === 401 && !originalRequest._retry) {
+            originalRequest._retry = true;
 
-export const productAPI = {
-    getProducts: () => apiClient.get("/products"),
-    createProduct: (data) => apiClient.post("/products", data),
-    updateProduct: (id, data) => apiClient.put(`/products/${id}`, data),
-    deleteProduct: (id) => apiClient.delete(`/products/${id}`),
-};
+            const refreshToken = Cookies.get("refreshToken"); // Lấy refreshToken từ cookie
 
-// Tương tự tạo các module API cho collection, discount, cart, checkout...
+            if (refreshToken) {
+                try {
+                    const response = await axios.post("https://api.azz.icu/auth/refresh", {
+                        refreshToken,
+                    });
 
-export const collectionAPI = {
-    getCollections: () => apiClient.get("/collections"),
-    createCollection: (data) => apiClient.post("/collections", data),
-    updateCollection: (id, data) => apiClient.put(`/collections/${id}`, data),
-    deleteCollection: (id) => apiClient.delete(`/collections/${id}`),
-};
+                    const newAccessToken = response.data.accessToken;
 
-export const discountAPI = {
-    getDiscounts: () => apiClient.get("/discounts"),
-    createDiscount: (data) => apiClient.post("/discounts", data),
-    updateDiscount: (id, data) => apiClient.put(`/discounts/${id}`, data),
-    deleteDiscount: (id) => apiClient.delete(`/discounts/${id}`),
-};
+                    // Lưu lại accessToken mới vào localStorage
+                    localStorage.setItem("authorization", newAccessToken);
 
-export const cartAPI = {
-    getCart: () => apiClient.get("/cart"),
-    addToCart: (data) => apiClient.post("/cart", data),
-    updateCart: (id, data) => apiClient.put(`/cart/${id}`, data),
-    removeFromCart: (id) => apiClient.delete(`/cart/${id}`),
-};
+                    // Cập nhật lại header cho request ban đầu
+                    originalRequest.headers["authorization"] = `Bearer ${newAccessToken}`;
 
-export const checkoutAPI = {
-    checkout: (data) => apiClient.post("/checkout", data),
-};
+                    return apiClient(originalRequest); // Gửi lại request với token mới
+                } catch (err) {
+                    return Promise.reject(err);
+                }
+            }
+        }
+
+        return Promise.reject(error);
+    }
+);
 
 export default apiClient;
