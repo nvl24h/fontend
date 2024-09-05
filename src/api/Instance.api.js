@@ -3,6 +3,7 @@ import Cookies from "js-cookie"; // Dùng cho refreshToken trong cookie
 
 const apiClient = axios.create({
     baseURL: "https://api.azz.icu",
+    timeout: 10000,
     headers: {
         "Content-Type": "application/json",
         "x-api-key":
