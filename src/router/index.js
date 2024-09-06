@@ -7,7 +7,7 @@ const router = createRouter({
     history: createWebHistory(import.meta.env.BASE_URL),
     routes: [
         {
-            path: "/",
+            path: "/login",
             name: "login",
             component: LoginSignupView,
             meta: { layout: "AuthLayout" },
@@ -29,7 +29,7 @@ const router = createRouter({
 router.beforeEach((to, from, next) => {
     const isAuthenticated = false; // Thay thế bằng logic xác thực của bạn
     if (to.matched.some((record) => record.meta.requiresAuth) && !isAuthenticated) {
-        next("/"); // Nếu route yêu cầu xác thực và chưa xác thực, chuyển hướng đến /login
+        next("/login"); // Nếu route yêu cầu xác thực và chưa xác thực, chuyển hướng đến /login
     } else {
         next(); // Cho phép truy cập nếu không yêu cầu xác thực hoặc đã xác thực
     }

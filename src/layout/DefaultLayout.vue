@@ -1,4 +1,5 @@
 <!-- src/layouts/DefaultLayout.vue -->
+
 <template>
     <div id="app">
         <header>
