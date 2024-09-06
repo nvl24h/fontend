@@ -15,4 +15,7 @@ export default {
 
 <style>
 /* CSS cho AuthLayout */
+.signup__logo {
+    width: 100px;
+}
 </style>

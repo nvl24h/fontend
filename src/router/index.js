@@ -13,6 +13,12 @@ const router = createRouter({
             meta: { layout: "AuthLayout" },
         },
         {
+            path: "/signup",
+            name: "signup",
+            component: LoginSignupView,
+            meta: { layout: "AuthLayout" },
+        },
+        {
             path: "/dashboard",
             name: "dashboard",
             component: Dashboardview1,

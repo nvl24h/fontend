@@ -2,7 +2,7 @@ import axios from "axios";
 import Cookies from "js-cookie"; // Dùng cho refreshToken trong cookie
 
 const apiClient = axios.create({
-    baseURL: "https://api.azz.icu",
+    baseURL: "https://api.azz.icu/v1/api", // Sử dụng đúng baseURL với /v1/api
     timeout: 10000,
     headers: {
         "Content-Type": "application/json",
@@ -11,7 +11,6 @@ const apiClient = axios.create({
     },
 });
 
-// Hàm lấy accessToken và x-user-id từ localStorage
 const getAuthHeaders = () => {
     const accessToken = localStorage.getItem("authorization");
     const userId = localStorage.getItem("x-user-id");
@@ -32,10 +31,7 @@ const getAuthHeaders = () => {
 // Interceptor request: Thêm accessToken và x-user-id nếu có
 apiClient.interceptors.request.use(
     (config) => {
-        // Lấy các headers liên quan đến xác thực
         const authHeaders = getAuthHeaders();
-
-        // Gộp các header vào config
         config.headers = {
             ...config.headers,
             ...authHeaders,
@@ -54,6 +50,7 @@ apiClient.interceptors.response.use(
     async (error) => {
         const originalRequest = error.config;
 
+        // Kiểm tra lỗi 401 và không retry quá nhiều lần
         if (error.response.status === 401 && !originalRequest._retry) {
             originalRequest._retry = true;
 
@@ -61,19 +58,17 @@ apiClient.interceptors.response.use(
 
             if (refreshToken) {
                 try {
-                    const response = await axios.post("https://api.azz.icu/auth/refresh", {
+                    const response = await axios.post("https://api.azz.icu/v1/api/auth/refresh", {
                         refreshToken,
                     });
 
                     const newAccessToken = response.data.accessToken;
+                    localStorage.setItem("authorization", newAccessToken); // Cập nhật lại accessToken mới
 
-                    // Lưu lại accessToken mới vào localStorage
-                    localStorage.setItem("authorization", newAccessToken);
-
-                    // Cập nhật lại header cho request ban đầu
+                    // Gửi lại request với token mới
                     originalRequest.headers["authorization"] = `Bearer ${newAccessToken}`;
 
-                    return apiClient(originalRequest); // Gửi lại request với token mới
+                    return apiClient(originalRequest);
                 } catch (err) {
                     return Promise.reject(err);
                 }

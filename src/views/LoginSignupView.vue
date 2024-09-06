@@ -1,8 +1,9 @@
 <template>
-    <div id="auth">
-        <div id="container">
-            <div id="box--left"></div>
-            <div id="box--right">
+    <div class="auth">
+        <div class="auth__container">
+            <div class="auth__box--left"></div>
+            <div class="auth__box--right">
+                <img class="auth__logo" src="../assets/logo.png" alt="Logo" />
                 <!-- Sử dụng component :is để chọn thành phần tương ứng -->
                 <component :is="currentComponent" :text="textProps">
                     <router-view></router-view>
@@ -35,7 +36,7 @@ export default {
 </script>
 
 <style scoped>
-#auth {
+.auth {
     background: #ffe6c9;
     width: 100vw;
     height: 100vh;
@@ -44,7 +45,7 @@ export default {
     justify-content: center;
 }
 
-#container {
+.auth__container {
     width: 1000px;
     height: 550px;
     background-color: white;
@@ -55,17 +56,24 @@ export default {
     max-height: calc(100% - 48px);
 }
 
-#box--left {
+.auth__box--left {
     width: 60%;
     background-image: url("../../public/images/auth/illustration.png");
     object-fit: cover;
     background-repeat: no-repeat;
-    background-size: 100%;
+    background-size: cover;
     border-radius: 20px 0 0 20px;
     background-position: center;
 }
 
-#box--right {
+.auth__box--right {
     width: 40%;
+}
+
+.auth__logo {
+    display: block;
+    width: 120px;
+    margin: 0 auto;
+    padding: 10% 0;
 }
 </style>
