@@ -39,71 +39,73 @@
 </template>
 
 <script>
+import { ref } from "vue";
+import { useRouter } from "vue-router";
+import { useAuthStore } from "@/stores/authStore";
+import { toast } from "vue3-toastify";
+
 export default {
     name: "Login",
-
     props: {
         text: {
             type: String,
             required: true,
         },
     },
+    setup() {
+        const router = useRouter();
+        const authStore = useAuthStore();
+        const email = ref("");
+        const password = ref("");
+        const emailError = ref(null);
+        const passwordError = ref(null);
+        const error = ref(null);
 
-    data() {
-        return {
-            email: "",
-            password: "",
-            emailError: null,
-            passwordError: null,
-        };
-    },
-
-    methods: {
-        handleSubmit() {
+        const handleSubmit = async () => {
             // Đặt lại các thông báo lỗi
-            this.nameError = null;
-            this.emailError = null;
-            this.passwordError = null;
+            emailError.value = null;
+            passwordError.value = null;
 
             // Kiểm tra email hợp lệ
-            const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-            if (!this.email.trim()) {
-                this.emailError = "Email is required";
-            } else if (!emailPattern.test(this.email)) {
-                this.emailError = "Please enter a valid email";
+            if (!email.value.trim()) {
+                emailError.value = "Email is required";
             }
 
             // Kiểm tra mật khẩu
-            if (!this.password.trim()) {
-                this.passwordError = "Password is required";
-            } else if (this.password.length < 6) {
-                this.passwordError = "Password must be at least 6 characters long";
+            if (!password.value.trim()) {
+                passwordError.value = "Password is required";
             }
 
             // Nếu không có lỗi, submit form
-            if (!this.emailError && !this.passwordError) {
-                // Gọi API hoặc xử lý logic đăng ký
-                console.log("Form submitted:", {
-                    name: this.name,
-                    email: this.email,
-                    password: this.password,
-                });
+            if (!emailError.value && !passwordError.value) {
+                // API
+                const userData = { email: email.value, password: password.value };
+                await authStore.logIn(userData);
 
-                // Ví dụ gửi API
-                // axios.post('/api/register', {
-                //   name: this.name,
-                //   email: this.email,
-                //   password: this.password
-                // })
-                // .then(response => console.log('Success', response))
-                // .catch(error => console.error('Error', error));
+                if (authStore.error) {
+                    error.value = authStore.error;
+                    toast.error("Tài khoản không chính xác");
+                } else {
+                    // Call handleRedirect to perform redirection
+                    await authStore.handleRedirect(router);
+                    toast.success("Đăng nhập thành công");
+                }
             }
-        },
+        };
+
+        return {
+            email,
+            password,
+            emailError,
+            passwordError,
+            error,
+            handleSubmit,
+        };
     },
 };
 </script>
+
 <style scoped>
-/* =============form sign up */
 .login {
     width: 100%;
 }
@@ -118,7 +120,7 @@ export default {
     line-height: 1.75;
     margin: 0 auto;
     display: block;
-    width: fit-content; /* Thay đổi từ 100% sang fit-content */
+    width: fit-content;
 }
 
 .login__form {

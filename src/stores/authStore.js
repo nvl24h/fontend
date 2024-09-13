@@ -12,21 +12,54 @@ export const useAuthStore = defineStore("auth", {
     actions: {
         async signUp(userData) {
             this.loading = true;
-            this.error = null; // Đặt lại lỗi trước khi gửi request
-            this.redirect = "/login"; // Đặt giá trị redirect sau khi đăng ký thành công
+            this.error = null;
+            this.redirect = null;
 
             try {
                 const response = await userAPI.createUser(userData);
                 this.user = response.data;
                 this.loading = false;
+                this.redirect = "/login";
             } catch (error) {
                 this.loading = false;
-                // Gán thông báo lỗi cụ thể hơn nếu có, nếu không thì đặt "Something went wrong"
                 this.error = error.response?.data?.message || "Something went wrong";
             }
         },
 
-        // Hành động để xử lý chuyển hướng
+        async logIn(userData) {
+            this.loading = true;
+            this.error = null;
+            this.redirect = "/dashboard";
+
+            try {
+                console.log("---------------");
+                const response = await userAPI.login(userData);
+                this.loading = false;
+
+                // Lưu thông tin vào localStorage
+                const { _id, name, email } = response?.data?.metadata?.shop;
+                const { accessToken, refreshToken } = response?.data?.metadata?.tokens;
+                localStorage.setItem("userId", _id);
+                localStorage.setItem("name", name);
+                localStorage.setItem("email", email);
+                localStorage.setItem("accessToken", accessToken);
+
+                // Lưu refreshToken vào cookie
+                if (refreshToken) {
+                    const expirationDate = new Date();
+                    expirationDate.setDate(expirationDate.getDate() + 7); // Đặt cookie hết hạn sau 7 ngày
+                    document.cookie = `refreshToken=${refreshToken}; expires=${expirationDate.toUTCString()}`;
+                }
+
+                this.user = response.data;
+                console.log(this.user);
+                this.redirect = "/dashboard";
+            } catch (error) {
+                this.loading = false;
+                this.error = error.response?.data?.message || "Something went wrong";
+            }
+        },
+
         handleRedirect(router) {
             if (this.redirect) {
                 setTimeout(() => {

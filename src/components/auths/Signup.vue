@@ -102,11 +102,11 @@ export default {
 
                 if (authStore.error) {
                     error.value = authStore.error;
-                    toast.warning("Tài khoản tồn tại");
+                    toast.warning("Tài khoản không tồn tại");
                 } else {
                     // Call handleRedirect to perform redirection
                     authStore.handleRedirect(router);
-                    toast.success("Đăng ký thành công! Sẽ được chuyển hướng đăng nhập trong 3s");
+                    toast.success("Đăng nhập thành công! Sẽ được chuyển hướng đăng nhập trong 3s");
                 }
             }
         };

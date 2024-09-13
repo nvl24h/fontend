@@ -21,15 +21,16 @@ import Signup from "@/components/auths/Signup.vue";
 export default {
     name: "LoginSignup",
     computed: {
+        // Trả về component dựa trên route
         currentComponent() {
-            const route = this.$route;
-            // Chọn thành phần dựa trên đường dẫn
-            return route.path === "/login" ? Login : Signup;
+            const path = this.$route.path.replace(/\/$/, ""); // Loại bỏ dấu `/` dư thừa ở cuối
+            return path === "/login" ? Login : Signup;
         },
 
+        // Trả về text dựa trên route
         textProps() {
-            const route = this.$route;
-            return route.path === "/login" ? "Đăng Nhập" : "Đăng Ký";
+            const path = this.$route.path.replace(/\/$/, ""); // Loại bỏ dấu `/` dư thừa ở cuối
+            return path === "/login" ? "Đăng Nhập" : "Đăng Ký";
         },
     },
 };
